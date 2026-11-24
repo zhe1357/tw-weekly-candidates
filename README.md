@@ -1,11 +1,109 @@
 # 週線研究室｜台股 CNN 候選標的
 
-Static GitHub Pages version of the weekly Taiwan CNN candidates dashboard.
+**網站：https://zhe1357.github.io/tw-weekly-candidates/**
 
-- `public/data/runs/*.json` — one published snapshot per run (same content the former `/api/runs?id=` served).
-- `public/data/weeks.json` — run index, newest first (former `/api/weeks`).
-- Weekly data is committed by `Reimage_price_trends/publish_weekly_site.py` on the model machine.
-- Every push runs `npm run validate` (zod snapshot schema), `npm test` and `npm run build`;
-  only a passing build is deployed, so a bad snapshot never replaces the live site.
+每週五收盤後，用 CNN 模型讀取台股的 K 線影像，排出下一週的觀察名單。這個網站是公開、唯讀的研究看板：在瀏覽器裡顯示已發布的模型分數，不會在網頁上重新訓練或執行模型。
 
-Local: `npm ci && npm run dev`.
+> ⚠️ 本網站僅供研究觀察，不構成任何投資建議。上漲分數是模型輸出，不是經過校準的勝率；預測報酬也不是實際績效。
+
+---
+
+## 網站功能
+
+| 頁面／功能 | 說明 |
+| --- | --- |
+| **候選名單**（首頁） | 本期分類模型、報酬模型、雙模型交集，以及全部有效標的四種名單，可搜尋、排序、篩選上市或上櫃 |
+| **自訂股票池與組數** | 輸入市值前 N 大（最多 1,000）與分組數，直接在瀏覽器重新分組，不會修改已發布的資料 |
+| **歷史配置** | 對 Top 50／100／200／500／1,000 套用 2026 年 1–9 月（36 週）回測中累積報酬最高的組數；沒有對應配置時改用手動設定 |
+| **歷史週次** | 切換查看每一期已發布的快照 |
+| **上週報酬** | 每檔股票最近一個完整交易週的收盤到收盤報酬（未扣交易成本），只往回看，不使用未來資料 |
+| **固定股票池**（`/fixed-pool/`） | 2025-12-31 市值前 1,000 大的完整名單，標示當期是否取得有效模型輸入 |
+| **下載與連結** | 名單可下載為 CSV（含目前設定）；股票名稱連到 Yahoo 股市行情頁 |
+
+## 模型與選股方法
+
+```
+固定股票池（2025 年底市值前 N 大）
+   → 當週 OHLCV K 線影像（週一至週五，含成交量）
+   → 兩個 CNN 模型
+        ├─ 分類模型：下週上漲的分數
+        └─ 回歸模型：預測下週報酬
+   → 依分數分組，取各模型最高分組；兩者都在最高組即為「雙模型交集」
+```
+
+- **影像**：每檔股票每週一張 5 日 K 線圖（I5），預測下一週（R5）的收盤到收盤總報酬。休市日留白，不補值。
+- **模型**：以 2000–2019 年台股資料訓練，凍結權重；每個模型取 5 個隨機種子的平均。
+- **股票池**：固定使用 2025-12-31 的市值排名，不會每週重新排名。缺少行情或有效影像的股票直接空缺，不由後面順位遞補；之後新上市的公司也不會加入。
+- **分組**：分數由高到低排序，同分時依股票代號排序，再平均切成 N 組（與研究端 Python 的 `numpy.array_split` 結果一致）。
+- **觀察區間**：訊號日的下一個日曆週（週一到週五），實際交易日以交易所休市安排為準。
+
+## 更新流程
+
+```
+研究端排程（每週五 18:00，台北時間；20:00、22:00 重試）
+   → 更新行情 → 產生影像 → 模型預測
+   → 將快照 JSON commit 並 push 到本 repo
+   → GitHub Actions：資料驗證 → 測試 → 建置 → 部署到 GitHub Pages
+   → 研究端讀回網站上的資料，確認與送出的內容完全一致，才算發布成功
+```
+
+- **只有通過驗證才會上線。**快照必須符合 [`src/lib/public-data.ts`](src/lib/public-data.ts) 的 zod 規則，例如欄位格式、分組範圍、市值順位、股票代號不重複。驗證或測試失敗時不會部署，網站維持上一期。
+- **只公開衍生結果。**公開資料只包含股票代號、名稱、分數、排名、市值與時間資訊。模型權重、訓練資料、未來報酬標籤與任何憑證都不會放進本 repo。
+- **網站和研究主機沒有連線。**本 repo 只接收研究端主動推送的資料，網站本身是純靜態檔案，不會連回研究端。
+
+## 資料格式
+
+所有資料都在 [`public/data/`](public/data/)，可以直接下載使用：
+
+| 檔案 | 內容 |
+| --- | --- |
+| `weeks.json` | 已發布快照的索引（最新在前，最多 100 筆），每筆含 `id`、`signalDate`、`publishedAt`、`file` 等欄位 |
+| `runs/<id>.json` | 單一期的完整快照：`rows` 為所選股票池的名單，`universeRows` 為固定池全部 1,000 檔的分數 |
+
+快照 `id` 的格式為 `訊號日:股票池大小:組數:模型期間[:fixed:市值基準日]`，例如 `2026-11-20:500:10:2000_2019:fixed:2025-12-31`。
+
+`rows` 中每檔股票的主要欄位：
+
+| 欄位 | 說明 |
+| --- | --- |
+| `ticker`、`name`、`market` | 股票代號、名稱、市場（`TWSE` 上市／`TPEX` 上櫃） |
+| `probability` | 分類模型的上漲分數（0–1） |
+| `predictedReturn` | 回歸模型的預測週報酬 |
+| `probabilityRank`／`returnRank` | 兩個模型各自的排名 |
+| `probabilityGroup`／`returnGroup` | 兩個模型各自的分組（1 為最高分組） |
+| `marketCapMillion`、`marketCapRank` | 基準日市值（百萬新台幣）與市值順位 |
+| `previousWeekReturn` | 上一個完整交易週的報酬（`previousWeekStart`～`previousWeekEnd`） |
+
+固定股票池的完整名單另存於 [`public/fixed-pool-2025-12-31-top1000.csv`](public/fixed-pool-2025-12-31-top1000.csv)。
+
+## 專案結構
+
+```
+├─ index.html、fixed-pool/index.html   兩個頁面的入口
+├─ src/
+│  ├─ pages/          首頁與固定股票池頁面
+│  ├─ components/     側邊欄、固定池列表
+│  ├─ lib/            資料格式（zod）、分組邏輯、歷史配置、資料讀取
+│  └─ data/           固定股票池名單（JSON）
+├─ public/data/       每週快照資料（由研究端推送）
+├─ scripts/validate-data.mjs   部署前的資料驗證
+├─ tests/             分組、資料格式、歷史配置的單元測試
+└─ .github/workflows/deploy.yml   GitHub Pages 自動部署
+```
+
+使用技術：React 19、Vite、TypeScript、zod、lucide-react。
+
+## 本機開發
+
+需要 Node.js 22.18 以上。
+
+```bash
+npm ci
+npm run dev        # 開發伺服器
+npm run validate   # 驗證 public/data 內的所有快照
+npm test           # 單元測試
+npm run build      # 建置到 dist/
+npm run preview    # 預覽建置結果
+```
+
+網站預設部署在 `/tw-weekly-candidates/` 路徑下；要部署到其他路徑時，可以用環境變數 `SITE_BASE` 覆寫，例如 `SITE_BASE=/ npm run build`。
