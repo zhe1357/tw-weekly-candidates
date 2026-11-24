@@ -1,0 +1,72 @@
+[
+ {
+  "id": "2026-11-20:500:10:2000_2019:fixed:2025-12-31",
+  "signalDate": "2026-11-20",
+  "publishedAt": "2026-11-20T10:08:35.780Z",
+  "poolSize": 500,
+  "groupCount": 10,
+  "modelPeriod": "2000_2019",
+  "marketCapBasisDate": "2025-12-31",
+  "file": "2026-11-20_500_10_2000_2019_fixed_2025-12-31.json"
+ },
+ {
+  "id": "2026-11-13:500:10:2000_2019:fixed:2025-12-31",
+  "signalDate": "2026-11-13",
+  "publishedAt": "2026-11-13T10:08:31.600Z",
+  "poolSize": 500,
+  "groupCount": 10,
+  "modelPeriod": "2000_2019",
+  "marketCapBasisDate": "2025-12-31",
+  "file": "2026-11-13_500_10_2000_2019_fixed_2025-12-31.json"
+ },
+ {
+  "id": "2026-11-06:500:10:2000_2019:fixed:2025-12-31",
+  "signalDate": "2026-11-06",
+  "publishedAt": "2026-11-06T10:08:43.752Z",
+  "poolSize": 500,
+  "groupCount": 10,
+  "modelPeriod": "2000_2019",
+  "marketCapBasisDate": "2025-12-31",
+  "file": "2026-11-06_500_10_2000_2019_fixed_2025-12-31.json"
+ },
+ {
+  "id": "2026-10-30:500:10:2000_2019:fixed:2025-12-31",
+  "signalDate": "2026-10-30",
+  "publishedAt": "2026-11-03T05:42:40.520Z",
+  "poolSize": 500,
+  "groupCount": 10,
+  "modelPeriod": "2000_2019",
+  "marketCapBasisDate": "2025-12-31",
+  "file": "2026-10-30_500_10_2000_2019_fixed_2025-12-31.json"
+ },
+ {
+  "id": "2026-10-22:500:10:2000_2019:fixed:2025-12-31",
+  "signalDate": "2026-10-22",
+  "publishedAt": "2026-10-26T07:47:49.730Z",
+  "poolSize": 500,
+  "groupCount": 10,
+  "modelPeriod": "2000_2019",
+  "marketCapBasisDate": "2025-12-31",
+  "file": "2026-10-22_500_10_2000_2019_fixed_2025-12-31.json"
+ },
+ {
+  "id": "2026-10-16:500:10:2000_2019:fixed:2025-12-31",
+  "signalDate": "2026-10-16",
+  "publishedAt": "2026-10-26T07:47:46.066Z",
+  "poolSize": 500,
+  "groupCount": 10,
+  "modelPeriod": "2000_2019",
+  "marketCapBasisDate": "2025-12-31",
+  "file": "2026-10-16_500_10_2000_2019_fixed_2025-12-31.json"
+ },
+ {
+  "id": "2026-10-16:500:10:2000_2019",
+  "signalDate": "2026-10-16",
+  "publishedAt": "2026-10-18T11:25:19.746Z",
+  "poolSize": 500,
+  "groupCount": 10,
+  "modelPeriod": "2000_2019",
+  "marketCapBasisDate": null,
+  "file": "2026-10-16_500_10_2000_2019.json"
+ }
+]
